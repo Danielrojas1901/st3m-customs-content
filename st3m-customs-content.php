@@ -3,7 +3,7 @@
  * Plugin Name: ST3M Customs Content
  * Plugin URI: 
  * Description: Plugin personalizado para gestionar contenidos dinámicos reutilizables.
- * Version: 1.0.1
+ * Version: 1.0.2
  * Author: ST3M 
  * Text Domain: st3m-customs-content
  * Update URI: https://github.com/Danielrojas1901/st3m-customs-content
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
  * Constantes base del plugin.
  */
 if (!defined('ST3M_CC_VERSION')) {
-    define('ST3M_CC_VERSION', '1.0.1');
+    define('ST3M_CC_VERSION', '1.0.2');
 }
 
 if (!defined('ST3M_CC_FILE')) {

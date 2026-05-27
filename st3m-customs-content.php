@@ -90,6 +90,50 @@ function st3m_render_template($template_path, $variables = array()) {
     return ob_get_clean();
 }
 
+/**
+ * Valida texto general para campos como dirección, descripción, horario y texto del botón.
+ */
+function st3m_validate_general_text($value, $max_length) {
+    if (mb_strlen($value) > $max_length) {
+        return false;
+    }
+
+    return preg_match('/^[\p{L}\p{N}\s.,;:()\-+#\/@áéíóúÁÉÍÓÚñÑüÜ]+$/u', $value);
+}
+
+/**
+ * Valida texto de ubicación para campos como ciudad, estado o ubicación.
+ */
+function st3m_validate_location_text($value, $max_length) {
+    if (mb_strlen($value) > $max_length) {
+        return false;
+    }
+
+    return preg_match('/^[\p{L}\s.\-áéíóúÁÉÍÓÚñÑüÜ]+$/u', $value);
+}
+
+/**
+ * Valida teléfono con formato flexible.
+ */
+function st3m_validate_phone($phone) {
+    return preg_match('/^[0-9+()\s-]{7,25}$/', $phone);
+}
+
+/**
+ * Valida email.
+ */
+function st3m_validate_email($email) {
+    return is_email($email);
+}
+
+/**
+ * Valida URL http/https.
+ */
+function st3m_validate_url($url) {
+    return wp_http_validate_url($url);
+}
+
+
 /*===============================
    SEDES
 ===============================*/
@@ -289,6 +333,74 @@ function st3m_save_metabox_sedes($post_id) {
         return;
     }
 
+    if (get_post_type($post_id) !== 'st3m_sede') {
+    return;
+    }
+
+    /**
+     * Sanitiza y valida los campos antes de guardar.
+     */
+
+    $ciudad = isset($_POST['st3m_ciudad'])
+    ? sanitize_text_field($_POST['st3m_ciudad'])
+    : '';
+
+    $estado = isset($_POST['st3m_estado'])
+        ? sanitize_text_field($_POST['st3m_estado'])
+        : '';
+
+    $direccion = isset($_POST['st3m_direccion'])
+        ? sanitize_text_field($_POST['st3m_direccion'])
+        : '';
+
+    $telefono = isset($_POST['st3m_telefono'])
+        ? sanitize_text_field($_POST['st3m_telefono'])
+        : '';
+
+    $email = isset($_POST['st3m_email'])
+        ? sanitize_email($_POST['st3m_email'])
+        : '';
+
+    $horario = isset($_POST['st3m_horario'])
+        ? sanitize_textarea_field($_POST['st3m_horario'])
+        : '';
+
+    $mapa_url = isset($_POST['st3m_mapa_url'])
+        ? esc_url_raw($_POST['st3m_mapa_url'])
+        : '';
+
+    if (
+        empty($ciudad) ||
+        empty($estado) ||
+        empty($direccion)
+    ) {
+        return;
+    }
+
+    if (
+        !st3m_validate_location_text($ciudad, 50) ||
+        !st3m_validate_location_text($estado, 50) ||
+        !st3m_validate_general_text($direccion, 120)
+    ) {
+        return;
+    }
+
+    if (!empty($telefono) && !st3m_validate_phone($telefono)) {
+        return;
+    }
+
+    if (!empty($email) && !st3m_validate_email($email)) {
+        return;
+    }
+
+    if (!empty($horario) && !st3m_validate_general_text($horario, 120)) {
+        return;
+    }
+
+    if (!empty($mapa_url) && !st3m_validate_url($mapa_url)) {
+        return;
+    }
+
     /**
      * Guarda ciudad.
      */
@@ -296,7 +408,7 @@ function st3m_save_metabox_sedes($post_id) {
         update_post_meta(
             $post_id,
             '_st3m_ciudad',
-            sanitize_text_field($_POST['st3m_ciudad'])
+            $ciudad
         );
     }
 
@@ -307,7 +419,7 @@ function st3m_save_metabox_sedes($post_id) {
         update_post_meta(
             $post_id,
             '_st3m_estado',
-            sanitize_text_field($_POST['st3m_estado'])
+            $estado
         );
     }
 
@@ -318,7 +430,7 @@ function st3m_save_metabox_sedes($post_id) {
         update_post_meta(
             $post_id,
             '_st3m_direccion',
-            sanitize_text_field($_POST['st3m_direccion'])
+            $direccion
         );
     }
 
@@ -329,7 +441,7 @@ function st3m_save_metabox_sedes($post_id) {
         update_post_meta(
             $post_id,
             '_st3m_telefono',
-            sanitize_text_field($_POST['st3m_telefono'])
+            $telefono
         );
     }
 
@@ -340,7 +452,7 @@ function st3m_save_metabox_sedes($post_id) {
         update_post_meta(
             $post_id,
             '_st3m_email',
-            sanitize_email($_POST['st3m_email'])
+            $email
         );
     }
 
@@ -351,7 +463,7 @@ function st3m_save_metabox_sedes($post_id) {
         update_post_meta(
             $post_id,
             '_st3m_horario',
-            sanitize_textarea_field($_POST['st3m_horario'])
+            $horario
         );
     }
 
@@ -362,7 +474,7 @@ function st3m_save_metabox_sedes($post_id) {
         update_post_meta(
             $post_id,
             '_st3m_mapa_url',
-            esc_url_raw($_POST['st3m_mapa_url'])
+            $mapa_url
         );
     }
 }
@@ -715,6 +827,78 @@ function st3m_save_metabox_aliados($post_id) {
         return;
     }
 
+    /* 
+    * Sanitiza y valida los campos antes de guardar.
+    */
+
+    $tipo = isset($_POST['st3m_aliado_tipo'])
+    ? sanitize_text_field($_POST['st3m_aliado_tipo'])
+    : '';
+
+    $descripcion = isset($_POST['st3m_aliado_descripcion'])
+        ? sanitize_textarea_field($_POST['st3m_aliado_descripcion'])
+        : '';
+
+    $ubicacion = isset($_POST['st3m_aliado_ubicacion'])
+        ? sanitize_text_field($_POST['st3m_aliado_ubicacion'])
+        : '';
+
+    $telefono = isset($_POST['st3m_aliado_telefono'])
+        ? sanitize_text_field($_POST['st3m_aliado_telefono'])
+        : '';
+
+    $email = isset($_POST['st3m_aliado_email'])
+        ? sanitize_email($_POST['st3m_aliado_email'])
+        : '';
+
+    $mostrar_boton = isset($_POST['st3m_aliado_mostrar_boton']) ? '1' : '0';
+
+    $boton_texto = isset($_POST['st3m_aliado_boton_texto'])
+        ? sanitize_text_field($_POST['st3m_aliado_boton_texto'])
+        : '';
+
+    $boton_url = isset($_POST['st3m_aliado_boton_url'])
+        ? esc_url_raw($_POST['st3m_aliado_boton_url'])
+        : '';
+
+    if (
+        empty($tipo) ||
+        empty($descripcion)
+    ) {
+        return;
+    }
+
+    if (
+        !st3m_validate_general_text($tipo, 40) ||
+        !st3m_validate_general_text($descripcion, 180)
+    ) {
+        return;
+    }
+
+    if (!empty($ubicacion) && !st3m_validate_location_text($ubicacion, 80)) {
+        return;
+    }
+
+    if (!empty($telefono) && !st3m_validate_phone($telefono)) {
+        return;
+    }
+
+    if (!empty($email) && !st3m_validate_email($email)) {
+        return;
+    }
+
+    if ($mostrar_boton === '1') {
+        if (
+            empty($boton_texto) ||
+            empty($boton_url) ||
+            !st3m_validate_general_text($boton_texto, 30) ||
+            !st3m_validate_url($boton_url)
+        ) {
+            return;
+        }
+    }
+
+
     if (isset($_POST['st3m_aliado_tipo'])) {
         update_post_meta(
             $post_id,
@@ -888,3 +1072,42 @@ function st3m_enqueue_frontend_assets() {
 }
 
 add_action('wp_enqueue_scripts', 'st3m_enqueue_frontend_assets');
+
+
+/**
+ * Carga scripts del plugin en el admin.
+ */
+function st3m_enqueue_admin_assets($hook) {
+
+    global $post;
+
+    if (!$post) {
+        return;
+    }
+
+    $allowed_post_types = array(
+        'st3m_sede',
+        'st3m_aliado',
+    );
+
+    if (!in_array($post->post_type, $allowed_post_types, true)) {
+        return;
+    }
+
+    wp_enqueue_script(
+        'st3m-admin-validation',
+        ST3M_CC_URL . 'assets/js/st3m-admin-validation.js',
+        array(),
+        ST3M_CC_VERSION,
+        true
+    );
+
+    wp_enqueue_style(
+        'st3m-admin-style',
+        ST3M_CC_URL . 'assets/css/st3m-admin.css',
+        array(),
+        ST3M_CC_VERSION
+    );
+}
+
+add_action('admin_enqueue_scripts', 'st3m_enqueue_admin_assets');

@@ -1,0 +1,15 @@
+/*
+    para validaciones
+*/
+
+.st3m-field-invalid {
+    border-color: #d63638 !important;
+    box-shadow: 0 0 0 1px #d63638 !important;
+}
+
+.st3m-field-error {
+    margin: 6px 0 0;
+    color: #d63638;
+    font-size: 13px;
+    font-weight: 600;
+}
